@@ -149,9 +149,6 @@ with st.sidebar:
         st.rerun()
 
 if role == 'cashier':
-    # ==========================================
-    # واجهة الكاشير المطورة جداً
-    # ==========================================
     st.markdown("<h1>🛒 نقطة البيع والخدمات (الكاشير)</h1>", unsafe_allow_html=True)
     
     tab_pos, tab_maint, tab_iptv, tab_return = st.tabs([
@@ -161,7 +158,6 @@ if role == 'cashier':
         "🔄 المرتجعات"
     ])
     
-    # 1. المبيعات السريعة
     with tab_pos:
         st.markdown("### 🛍️ سلة المشتريات وإنهاء الفواتير")
         try:
@@ -215,11 +211,9 @@ if role == 'cashier':
                     except Exception as ex:
                         st.error(f"خطأ أثناء البيع: {ex}")
 
-    # 2. الصيانة الذكية (داخلية وخارجية مع سحب بضاعة من المخزن)
     with tab_maint:
         st.markdown("### 🛠️ نظام تذاكر الصيانة (الداخلية والخارجية المترابطة بالمخزن)")
         
-        # البحث السريع عن العميل برقم التليفون أو الاسم من سوابق الصيانة و IPTV
         try:
             m_db = supabase.table('maintenance').select('customer_name, phone').execute()
             i_db = supabase.table('iptv_subs').select('customer_name, phone').execute()
@@ -241,14 +235,13 @@ if role == 'cashier':
             if auto_fill and selected_client_key:
                 c_name = client_dict[selected_client_key]['name']
                 c_phone = client_dict[selected_client_key]['phone']
-                st.success(تم اختيار العميل: **{c_name}** | الهاتف: **{c_phone}**)
+                st.success(f"تم اختيار العميل: **{c_name}** | الهاتف: **{c_phone}**")
             else:
                 c_name = st.text_input("اسم العميل الجديد")
                 c_phone = st.text_input("رقم الموبايل (للتعرف عليه لاحقاً)")
 
             maint_mode = st.radio("نوع التيكت:", ["صيانة داخلية (في المحل)", "صيانة خارجية (زيارة منزلية)"])
             
-            # متغيرات الصيانة
             issue_desc = st.text_input("وصف المشكلة الأساسية")
             
             if maint_mode == "صيانة داخلية (في المحل)":
@@ -261,7 +254,6 @@ if role == 'cashier':
                 address_val = st.text_input("🏠 عنوان الزيارة الخارجية بالتفصيل")
                 issue_reason = "زيارة منزلية وفحص ميداني"
                 
-                # ربط الصيانة الخارجية ببضائع المحل (سحب بضاعة من المخزن)
                 st.markdown("---")
                 st.markdown("#### 📦 سحب بضاعة للمعاينة أو التركيب أثناء الزيارة (تتخصم من المخزن وتُضاف عالحساب)")
                 try:
@@ -294,7 +286,6 @@ if role == 'cashier':
             if submit_ticket:
                 if c_name and c_phone and issue_desc:
                     try:
-                        # 1. حفظ التيكت
                         full_details = f"[{maint_mode}] المشكلة: {issue_desc} | السبب/ملاحظات: {issue_reason}"
                         supabase.table('maintenance').insert({
                             'customer_name': c_name,
@@ -305,7 +296,6 @@ if role == 'cashier':
                             'status': ticket_status
                         }).execute()
                         
-                        # 2. لو تم أخذ بضاعة في الصيانة الخارجية، يتم خصمها من المخزن فوراً
                         if selected_prod_id and taken_qty > 0:
                             p_curr = supabase.table('products').select('stock_quantity').eq('id', selected_prod_id).execute()
                             if p_curr.data:
@@ -319,7 +309,6 @@ if role == 'cashier':
                 else:
                     st.warning("يرجى إدخال اسم العميل، رقم الهاتف، ووصف المشكلة.")
 
-    # 3. اشتراكات الـ IPTV
     with tab_iptv:
         st.markdown("### 📺 تسجيل اشتراكات الـ IPTV (بربط العملاء)")
         with st.form("smart_iptv_form"):
@@ -353,9 +342,6 @@ if role == 'cashier':
         st.info("نظام المرتجعات مفعل.")
 
 else:
-    # ==========================================
-    # لوحة تحكم المدير الشاملة (Admin Dashboard)
-    # ==========================================
     st.markdown("<h1>📊 لوحة تحكم الإدارة - الفريد سات</h1>", unsafe_allow_html=True)
     
     admin_tab1, admin_tab2, admin_tab3, admin_tab4, admin_tab5 = st.tabs([
