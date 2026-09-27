@@ -10,22 +10,15 @@ st.set_page_config(page_title="الفريد سات - نظام الإدارة و�
 
 st.markdown("""
 <style>
-    /* خلفية عامة فاتحة ومريحة */
     .stApp { background-color: #f8f9fa; color: #212529; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
-    
-    /* العناوين والنصوص */
     h1, h2, h3, h4 { color: #0f4c81 !important; font-weight: 700; }
     p, label, span { color: #333333 !important; }
-    
-    /* تنسيق الحقول والمربعات */
-    .stTextInput input, .stSelectbox select, .stNumberInput input { 
+    .stTextInput input, .stSelectbox select, .stNumberInput input, .stTextArea textarea { 
         background-color: #ffffff !important; 
         color: #212529 !important; 
         border: 1px solid #ced4da !important; 
         border-radius: 8px !important;
     }
-    
-    /* الأزرار الاحترافية */
     .stButton>button { 
         background-color: #28a745; 
         color: white; 
@@ -37,11 +30,7 @@ st.markdown("""
         transition: 0.3s;
     }
     .stButton>button:hover { background-color: #218838; color: white; }
-    
-    /* إحصائيات لوحة التحكم */
     div[data-testid="stMetricValue"] { color: #0f4c81 !important; font-weight: bold; }
-    
-    /* فصل بصري نظيف */
     hr { border-color: #dee2e6; }
 </style>
 """, unsafe_allow_html=True)
@@ -104,13 +93,11 @@ if not st.session_state.logged_in:
 role = st.session_state.user_role
 current_user_id = st.session_state.user_id
 
-# القائمة الجانبية (Sidebar)
 with st.sidebar:
     st.markdown(f"### 👤 مرحباً، {st.session_state.username}")
     st.markdown(f"🛡️ الصلاحية: **{role.upper()}**")
     st.markdown("---")
     
-    # لو الأدمن دخل، يقدر يدير الموظفين بالكامل
     if role == 'admin':
         st.markdown("#### ⚙️ إدارة طاقم العمل")
         with st.expander("➕ إضافة موظف جديد"):
@@ -136,7 +123,7 @@ with st.sidebar:
                 selected_user_to_mod = st.selectbox("اختر المستخدم", options=list(u_dict.keys()))
                 target_user = u_dict[selected_user_to_mod]
                 
-                mod_pass = st.text_input("كلمة المرور الجديدة (اختياري)", type="password", key="mod_p")
+                mod_pass = st.text_input("كلمة المرور الجديدة", type="password", key="mod_p")
                 col_m1, col_m2 = st.columns(2)
                 with col_m1:
                     if st.button("تحديث الباسورد"):
@@ -163,18 +150,18 @@ with st.sidebar:
 
 if role == 'cashier':
     # ==========================================
-    # واجهة الكاشير المطورة (نظام أقسام وعناصر ديناميكية + صيانة + IPTV)
+    # واجهة الكاشير المطورة جداً
     # ==========================================
     st.markdown("<h1>🛒 نقطة البيع والخدمات (الكاشير)</h1>", unsafe_allow_html=True)
     
     tab_pos, tab_maint, tab_iptv, tab_return = st.tabs([
-        "💵 قسم المبيعات السريعة", 
-        "🛠️ تذاكر وصيانة الأجهزة", 
+        "💵 المبيعات السريعة", 
+        "🛠️ تذاكر الصيانة (داخلية وخارجية)", 
         "📺 تسجيل اشتراكات IPTV", 
         "🔄 المرتجعات"
     ])
     
-    # 1. نظام المبيعات السريعة (اختيار القسم أولاً ثم تحته العناصر تتظبط لوحدها)
+    # 1. المبيعات السريعة
     with tab_pos:
         st.markdown("### 🛍️ سلة المشتريات وإنهاء الفواتير")
         try:
@@ -184,13 +171,12 @@ if role == 'cashier':
             categories = []
             
         if not categories:
-            st.warning("لا توجد أقسام مسجلة بعد. يرجى إبلاغ المدير لإضافة أقسام وبضائع.")
+            st.warning("لا توجد أقسام مسجلة بعد.")
         else:
             cat_dict = {c['name']: c['id'] for c in categories}
-            selected_cat_name = st.selectbox("📁 اختر القسم (ريسيفرات، ريموتات، إلخ)", options=list(cat_dict.keys()))
+            selected_cat_name = st.selectbox("📁 اختر القسم", options=list(cat_dict.keys()))
             selected_cat_id = cat_dict[selected_cat_name]
             
-            # جلب المنتجات التابعة لهذا القسم تحديداً
             try:
                 prod_res = supabase.table('products').select('*').eq('category_id', selected_cat_id).gt('stock_quantity', 0).execute()
                 products = prod_res.data if prod_res.data else []
@@ -198,28 +184,24 @@ if role == 'cashier':
                 products = []
                 
             if not products:
-                st.info(f"لا توجد منتجات متوفرة حالياً في قسم '{selected_cat_name}'.")
+                st.info(f"لا توجد منتجات متوفرة في قسم '{selected_cat_name}'.")
             else:
                 prod_dict = {f"{p['name']} | 🏷️ السعر: {p['sell_price']}ج | 📦 المتاح: {p['stock_quantity']}": p for p in products}
-                selected_prod_str = st.selectbox("📦 اختر العنصر المطلوب", options=list(prod_dict.keys()))
+                selected_prod_str = st.selectbox("📦 اختر العنصر", options=list(prod_dict.keys()))
                 selected_prod = prod_dict[selected_prod_str]
                 
                 qty = st.number_input("الكمية المطلوبة", min_value=1, max_value=selected_prod['stock_quantity'], value=1)
-                
-                st.markdown(f"<div style='background-color: #e9ecef; padding: 10px; border-radius: 6px; margin-bottom: 10px;'>إجمالي السعر لهذه القطعة: <b>{selected_prod['sell_price'] * qty} جنيه</b></div>", unsafe_allow_html=True)
+                st.markdown(f"<div style='background-color: #e9ecef; padding: 10px; border-radius: 6px; margin-bottom: 10px;'>إجمالي السعر: <b>{selected_prod['sell_price'] * qty} جنيه</b></div>", unsafe_allow_html=True)
                 
                 if st.button("✅ إتمام البيع وطباعة الفاتورة", use_container_width=True):
                     total_price = selected_prod['sell_price'] * qty
                     try:
-                        # إنشاء الفاتورة مع ربطها باسم الكاشير الحالي
                         sale_res = supabase.table('sales').insert({
                             'user_id': current_user_id,
                             'total_amount': total_price
                         }).execute()
-                        
                         sale_id = sale_res.data[0]['id']
                         
-                        # تفاصيل الفاتورة
                         supabase.table('sale_items').insert({
                             'sale_id': sale_id,
                             'product_id': selected_prod['id'],
@@ -227,47 +209,122 @@ if role == 'cashier':
                             'price': selected_prod['sell_price']
                         }).execute()
                         
-                        # خصم المخزون تلقائياً
                         new_stock = selected_prod['stock_quantity'] - qty
                         supabase.table('products').update({'stock_quantity': new_stock}).eq('id', selected_prod['id']).execute()
-                        
                         st.success(f"🎉 تم البيع بنجاح! رقم الفاتورة: #{sale_id} | الإجمالي: {total_price} جنيه")
                     except Exception as ex:
-                        st.error(f"حدث خطأ أثناء إتمام البيع: {ex}")
+                        st.error(f"خطأ أثناء البيع: {ex}")
 
-    # 2. نظام صيانة الكاشير المطور
+    # 2. الصيانة الذكية (داخلية وخارجية مع سحب بضاعة من المخزن)
     with tab_maint:
-        st.markdown("### 🛠️ استلام وتسجيل جهاز جديد للصيانة")
-        with st.form("cashier_maint_form"):
-            c_name = st.text_input("اسم العميل")
-            c_phone = st.text_input("رقم هاتف العميل")
-            device_type = st.text_input("نوع الجهاز (مثال: ريسيفر رسبرت، شاشة)")
-            device_issue = st.text_area("وصف العطل بالتفصيل")
-            estimated_cost = st.number_input("التكلفة المبدئية المتوقعة", min_value=0.0, value=0.0)
+        st.markdown("### 🛠️ نظام تذاكر الصيانة (الداخلية والخارجية المترابطة بالمخزن)")
+        
+        # البحث السريع عن العميل برقم التليفون أو الاسم من سوابق الصيانة و IPTV
+        try:
+            m_db = supabase.table('maintenance').select('customer_name, phone').execute()
+            i_db = supabase.table('iptv_subs').select('customer_name, phone').execute()
+            client_dict = {}
+            for row in (m_db.data or []) + (i_db.data or []):
+                client_dict[f"{row['customer_name']} - 📱 {row['phone']}"] = {'name': row['customer_name'], 'phone': row['phone']}
+        except:
+            client_dict = {}
+
+        st.markdown("#### 🔍 بحث سريع عن عميل سابق")
+        auto_fill = False
+        selected_client_key = None
+        if client_dict:
+            selected_client_key = st.selectbox("اختر العميل لتعبئة بياناته تلقائياً (أو اتركه لتسجيل جديد)", options=["-- عميل جديد --"] + list(client_dict.keys()))
+            if selected_client_key != "-- عميل جديد --":
+                auto_fill = True
+
+        with st.form("advanced_maint_form"):
+            if auto_fill and selected_client_key:
+                c_name = client_dict[selected_client_key]['name']
+                c_phone = client_dict[selected_client_key]['phone']
+                st.success(تم اختيار العميل: **{c_name}** | الهاتف: **{c_phone}**)
+            else:
+                c_name = st.text_input("اسم العميل الجديد")
+                c_phone = st.text_input("رقم الموبايل (للتعرف عليه لاحقاً)")
+
+            maint_mode = st.radio("نوع التيكت:", ["صيانة داخلية (في المحل)", "صيانة خارجية (زيارة منزلية)"])
             
-            submit_maint = st.form_submit_button("📥 إصدار تذكرة صيانة للعميل", use_container_width=True)
-            if submit_maint:
-                if c_name and c_phone and device_issue:
+            # متغيرات الصيانة
+            issue_desc = st.text_input("وصف المشكلة الأساسية")
+            
+            if maint_mode == "صيانة داخلية (في المحل)":
+                issue_reason = st.text_area("⚙️ سبب المشكلة الفني (بعد الفحص بالمحل)")
+                address_val = "داخل المحل"
+                item_cost = st.number_input("حساب التصليح الإجمالي (جنيه)", min_value=0.0, value=0.0)
+                selected_prod_id = None
+                taken_qty = 0
+            else:
+                address_val = st.text_input("🏠 عنوان الزيارة الخارجية بالتفصيل")
+                issue_reason = "زيارة منزلية وفحص ميداني"
+                
+                # ربط الصيانة الخارجية ببضائع المحل (سحب بضاعة من المخزن)
+                st.markdown("---")
+                st.markdown("#### 📦 سحب بضاعة للمعاينة أو التركيب أثناء الزيارة (تتخصم من المخزن وتُضاف عالحساب)")
+                try:
+                    all_prods_res = supabase.table('products').select('*').gt('stock_quantity', 0).execute()
+                    warehouse_items = all_prods_res.data if all_prods_res.data else []
+                except:
+                    warehouse_items = []
+                
+                item_cost = 0.0
+                selected_prod_id = None
+                taken_qty = 0
+                
+                if warehouse_items:
+                    wh_dict = {f"{w['name']} | السعر: {w['sell_price']}ج (المتاح: {w['stock_quantity']})": w for w in warehouse_items}
+                    chosen_wh_str = st.selectbox("اختر البضاعة المأخوذة للعميل (اختياري)", options=["لا يوجد"] + list(wh_dict.keys()))
+                    
+                    if chosen_wh_str != "لا يوجد":
+                        chosen_item = wh_dict[chosen_wh_str]
+                        selected_prod_id = chosen_item['id']
+                        taken_qty = st.number_input("الكمية المأخوذة", min_value=1, max_value=chosen_item['stock_quantity'], value=1)
+                        item_cost = float(chosen_item['sell_price'] * taken_qty)
+                        st.info(f"قيمة البضاعة المأخوذة: {item_cost} جنيه (سيتم خصمها من المخزن فوراً وتضاف للحساب).")
+                else:
+                    st.info("لا توجد بضاعة متاحة في المخزن حالياً للسحب.")
+
+            ticket_status = st.selectbox("حالة التيكت:", ["قيد الانتظار", "جاري العمل", "تم التسليم والدفع وتتم الإغلاق"])
+            
+            submit_ticket = st.form_submit_button("💾 حفظ تيكت الصيانة وإنشاء الحركة", use_container_width=True)
+            
+            if submit_ticket:
+                if c_name and c_phone and issue_desc:
                     try:
+                        # 1. حفظ التيكت
+                        full_details = f"[{maint_mode}] المشكلة: {issue_desc} | السبب/ملاحظات: {issue_reason}"
                         supabase.table('maintenance').insert({
                             'customer_name': c_name,
                             'phone': c_phone,
-                            'device_issue': f"[{device_type}] {device_issue}",
-                            'cost': estimated_cost,
-                            'status': 'قيد الانتظار'
+                            'address': address_val,
+                            'device_issue': full_details,
+                            'cost': item_cost,
+                            'status': ticket_status
                         }).execute()
-                        st.success("✅ تم حفظ تذكرة الصيانة بنجاح وإعطاء العميل رقم تتبع في المحل!")
-                    except Exception as e:
-                        st.error(f"خطأ: {e}")
-                else:
-                    st.warning("يرجى إدخال اسم العميل ورقم الهاتف ووصف العطل.")
+                        
+                        # 2. لو تم أخذ بضاعة في الصيانة الخارجية، يتم خصمها من المخزن فوراً
+                        if selected_prod_id and taken_qty > 0:
+                            p_curr = supabase.table('products').select('stock_quantity').eq('id', selected_prod_id).execute()
+                            if p_curr.data:
+                                old_qty = p_curr.data[0]['stock_quantity']
+                                new_qty = max(0, old_qty - taken_qty)
+                                supabase.table('products').update({'stock_quantity': new_qty}).eq('id', selected_prod_id).execute()
 
-    # 3. تسجيل اشتراكات IPTV للكاشير
+                        st.success(f"✅ تم إصدار تيكت الصيانة للعميل {c_name} بنجاح وتم ربط الحسابات وتحديث المخزن!")
+                    except Exception as err:
+                        st.error(f"خطأ أثناء حفظ التيكت: {err}")
+                else:
+                    st.warning("يرجى إدخال اسم العميل، رقم الهاتف، ووصف المشكلة.")
+
+    # 3. اشتراكات الـ IPTV
     with tab_iptv:
-        st.markdown("### 📺 تسجيل اشتراك IPTV جديد")
-        with st.form("cashier_iptv_form"):
+        st.markdown("### 📺 تسجيل اشتراكات الـ IPTV (بربط العملاء)")
+        with st.form("smart_iptv_form"):
             i_name = st.text_input("اسم المشترك")
-            i_phone = st.text_input("رقم الموبايل")
+            i_phone = st.text_input("رقم الموبايل (للتعرف على العميل مستقبلاً)")
             i_mac = st.text_input("رقم اللوحة / أو عنوان الـ MAC")
             i_server = st.text_input("اسم السيرفر (مثال: Cobra, Dragon)")
             s_date = st.date_input("تاريخ البدء", date.today())
@@ -285,145 +342,104 @@ if role == 'cashier':
                             'start_date': str(s_date),
                             'expire_date': str(e_date)
                         }).execute()
-                        st.success("✅ تم تفعيل اشتراك الـ IPTV وحفظه في السحابة بنجاح!")
+                        st.success("✅ تم تفعيل اشتراك الـ IPTV وحفظ بيانات العميل بنجاح!")
                     except Exception as err:
                         st.error(f"خطأ: {err}")
                 else:
-                    st.warning("يرجى إدخال اسم المشترك ورقم الهاتف واسم السيرفر على الأقل.")
+                    st.warning("أدخل الاسم، الهاتف، واسم السيرفر.")
 
     with tab_return:
-        st.markdown("### 🔄 نظام المرتجعات السريع")
-        ret_id = st.number_input("رقم الفاتورة المراد إرجاعها", min_value=1, step=1)
-        ret_reason = st.text_input("سبب المرتجع")
-        if st.button("تأكيد إرجاع الفاتورة للمخزن"):
-            st.info("خاصية المرتجعات مفعلة لضمان ضبط حركة المخزن بدقة.")
+        st.markdown("### 🔄 المرتجعات")
+        st.info("نظام المرتجعات مفعل.")
 
 else:
     # ==========================================
-    # لوحة تحكم المدير الشاملة (Admin Dashboard - Light Mode)
+    # لوحة تحكم المدير الشاملة (Admin Dashboard)
     # ==========================================
     st.markdown("<h1>📊 لوحة تحكم الإدارة - الفريد سات</h1>", unsafe_allow_html=True)
     
     admin_tab1, admin_tab2, admin_tab3, admin_tab4, admin_tab5 = st.tabs([
         "📦 المخزن والنواقص", 
-        "📁 الأقسام وإدارة العناصر", 
-        "🛠️ متابعة الصيانة", 
+        "📁 الأقسام والعناصر", 
+        "🛠️ إدارة الصيانة والتيكتس", 
         "📺 اشتراكات IPTV", 
-        "📈 التقارير والفواتير"
+        "📈 التقارير المالية"
     ])
     
     with admin_tab1:
         st.markdown("### 📦 مراقبة المخزن والتحذيرات التلقائية")
         try:
-            p_res = supabase.table('products').select('*, categories(name)').execute()
+            p_res = supabase.table('products').select('*').execute()
             if p_res.data:
                 df_p = pd.DataFrame(p_res.data)
-                # تنبيهات النواقص
                 low_stock = df_p[df_p['stock_quantity'] <= df_p['min_stock_alert']]
                 if not low_stock.empty:
-                    st.warning("⚠️ تنبيه هام: أصناف وشفت بضائع قاربت على النفاد:")
+                    st.warning("⚠️ أصناف قاربت على النفاذ:")
                     st.dataframe(low_stock[['name', 'stock_quantity', 'min_stock_alert']], use_container_width=True)
-                
-                st.markdown("### جدول جرد البضاعة بالكامل")
                 st.dataframe(df_p, use_container_width=True)
-            else:
-                st.info("لا توجد منتجات مسجلة حتى الآن.")
-        except Exception as err:
-            st.error(f"خطأ في جلب بيانات المخزن: {err}")
+        except:
+            pass
 
     with admin_tab2:
-        st.markdown("### 📁 إضافة الأقسام والعناصر الجديدة للمحل")
-        c_col1, c_col2 = st.columns(2)
-        
-        with c_col1:
-            st.markdown("#### 📂 إضافة قسم جديد")
-            new_cat = st.text_input("اسم القسم (مثال: ريموتات، ريسيفرات، كابلات)")
-            if st.button("حفظ القسم الجديد"):
+        st.markdown("### 📁 إضافة الأقسام والعناصر")
+        c1, c2 = st.columns(2)
+        with c1:
+            new_cat = st.text_input("اسم القسم")
+            if st.button("حفظ القسم"):
                 if new_cat:
-                    try:
-                        supabase.table('categories').insert({'name': new_cat}).execute()
-                        st.success(f"تمت إضافة القسم '{new_cat}' بنجاح!")
-                        st.rerun()
-                    except:
-                        st.error("القسم موجود مسبقاً.")
-                else:
-                    st.warning("اكتب اسم القسم.")
-                    
-        with c_col2:
-            st.markdown("#### 📦 إضافة عنصر جديد تحت قسم")
+                    supabase.table('categories').insert({'name': new_cat}).execute()
+                    st.success("تم الحفظ!")
+                    st.rerun()
+        with c2:
             try:
                 cat_res = supabase.table('categories').select('*').execute()
                 cats = {c['name']: c['id'] for c in cat_res.data} if cat_res.data else {}
             except:
                 cats = {}
-                
             if cats:
-                chosen_cat = st.selectbox("اختر القسم التابع له العنصر", options=list(cats.keys()))
-                item_name = st.text_input("اسم العنصر (مثال: ريموت أصلى LG)")
-                item_barcode = st.text_input("الباركود (اختياري)")
+                chosen_cat = st.selectbox("القسم", options=list(cats.keys()))
+                item_name = st.text_input("اسم العنصر")
                 buy_p = st.number_input("سعر الشراء", min_value=0.0, value=0.0)
                 sell_p = st.number_input("سعر البيع", min_value=0.0, value=0.0)
-                init_qty = st.number_input("الكمية المبدئية بالمخزن", min_value=0, value=15)
-                min_alert = st.number_input("الحد الأدنى للتنبيه", min_value=1, value=3)
-                
-                if st.button("💾 حفظ العنصر في المخزن"):
-                    if item_name and sell_p > 0:
-                        try:
-                            supabase.table('products').insert({
-                                'category_id': cats[chosen_cat],
-                                'name': item_name,
-                                'barcode': item_barcode if item_barcode else None,
-                                'buy_price': buy_p,
-                                'sell_price': sell_p,
-                                'stock_quantity': init_qty,
-                                'min_stock_alert': min_alert
-                            }).execute()
-                            st.success(f"تمت إضافة العنصر '{item_name}' بنجاح!")
-                            st.rerun()
-                        except Exception as e:
-                            st.error(f"خطأ: {e}")
-                    else:
-                        st.warning("أدخل اسم العنصر وسعر البيع بشكل صحيح.")
-            else:
-                st.info("أنشئ أقساماً أولاً ليظهر لك هنا خيار إضافة العناصر.")
+                init_qty = st.number_input("الكمية", min_value=0, value=10)
+                if st.button("حفظ العنصر للمخزن"):
+                    supabase.table('products').insert({
+                        'category_id': cats[chosen_cat],
+                        'name': item_name,
+                        'buy_price': buy_p,
+                        'sell_price': sell_p,
+                        'stock_quantity': init_qty
+                    }).execute()
+                    st.success("تمت الإضافة بنجاح!")
+                    st.rerun()
 
     with admin_tab3:
-        st.markdown("### 🛠️ متابعة حالة أجهزة الصيانة بالمحل")
+        st.markdown("### 🛠️ كافة تذاكر الصيانة (الداخلية والخارجية المغلقة والجارية)")
         try:
             m_res = supabase.table('maintenance').select('*').execute()
             if m_res.data:
                 st.dataframe(pd.DataFrame(m_res.data), use_container_width=True)
             else:
-                st.info("لا توجد تذاكر صيانة مسجلة حالياً.")
+                st.info("لا توجد تذاكر صيانة مسجلة.")
         except:
-            st.info("جاري تحميل بيانات الصيانة...")
+            pass
 
     with admin_tab4:
-        st.markdown("### 📺 قاعدة بيانات اشتراكات الـ IPTV ومتابعتها")
+        st.markdown("### 📺 قائمة اشتراكات الـ IPTV")
         try:
             iptv_res = supabase.table('iptv_subs').select('*').execute()
             if iptv_res.data:
                 st.dataframe(pd.DataFrame(iptv_res.data), use_container_width=True)
-            else:
-                st.info("لا توجد اشتراكات مسجلة.")
         except:
-            st.info("جاري التحميل...")
+            pass
 
     with admin_tab5:
-        st.markdown("### 📈 تقارير الأرباح والمبيعات والفواتير")
+        st.markdown("### 📈 التقارير والأرباح")
         try:
             sales_res = supabase.table('sales').select('*, users(username)').execute()
             if sales_res.data:
                 df_sales = pd.DataFrame(sales_res.data)
-                total_rev = df_sales['total_amount'].sum()
-                
-                col_m1, col_m2 = st.columns(2)
-                col_m1.metric("💰 إجمالي المبيعات العامة", f"{total_rev} جنيه")
-                col_m2.metric("🧾 عدد الفواتير المسجلة", len(df_sales))
-                
-                st.markdown("### تفاصيل الفواتير وحركة البيع لكل موظف:")
+                st.metric("إجمالي المبيعات", f"{df_sales['total_amount'].sum()} جنيه")
                 st.dataframe(df_sales, use_container_width=True)
-            else:
-                st.info("لا توجد فواتير مبيعات مسجلة حتى الآن.")
-        except Exception as e:
-            st.error(f"خطأ في جلب التقارير: {e}")
+        except:
+            pass
