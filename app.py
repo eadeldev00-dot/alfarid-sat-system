@@ -4,65 +4,83 @@ import pandas as pd
 from datetime import date
 
 # ==========================================
-# 1. إعدادات الصفحة وفرض الوضع الفاتح النقي بالكامل
+# 1. إعدادات الصفحة والوضع الفاتح النقي 100% (صفر ألوان سوداء)
 # ==========================================
 st.set_page_config(page_title="الفريد سات - نظام الإدارة والكاشير", page_icon="📺", layout="wide")
 
 st.markdown("""
 <style>
-    /* فرض الألوان الفاتحة على التطبيق بالكامل وإلغاء أي مظهر داكن */
-    .stApp { background-color: #ffffff !important; color: #212529 !important; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+    /* منع أي خلفيات أو عناصر سوداء في التطبيق بالكامل */
+    .stApp, [data-testid="stAppViewContainer"], [data-testid="stHeader"] {
+        background-color: #f8fafc !important;
+        color: #0f172a !important;
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
     
-    /* العناوين والنصوص */
-    h1, h2, h3, h4, h5, h6 { color: #0f4c81 !important; font-weight: 700 !important; }
-    p, label, span, div, .stMarkdown { color: #212529 !important; }
+    /* العناوين والنصوص بوضوح تام */
+    h1, h2, h3, h4, h5, h6 { color: #1e3a8a !important; font-weight: 700 !important; }
+    p, label, span, div, .stMarkdown, .stText { color: #334155 !important; }
     
-    /* مربعات الإدخال والنصوص والقوائم المنسدلة (إزالة الأسود نهائياً) */
-    input, textarea, select, div[data-baseweb="select"] > div, div[data-baseweb="input"] > div { 
-        background-color: #ffffff !important; 
-        color: #212529 !important; 
-        border: 1px solid #0f4c81 !important; 
+    /* مربعات الإدخال والقوائم (بيضاء بالكامل وبدون أسود) */
+    input, textarea, select, 
+    div[data-baseweb="select"] > div, 
+    div[data-baseweb="input"] > div,
+    .stTextInput input, .stNumberInput input, .stTextArea textarea {
+        background-color: #ffffff !important;
+        color: #0f172a !important;
+        border: 1px solid #cbd5e1 !important;
         border-radius: 8px !important;
     }
     
-    /* قوائم الاختيار المنبثقة والتقويم (Date Picker & Dropdowns) لتكون بيضاء وواضحة */
-    div[data-baseweb="popover"], div[data-baseweb="menu"], ul[data-baseweb="menu"], div[data-baseweb="calendar"] {
+    /* قوائم الاختيار المنبثقة والتقويم (Calendar & Popovers بيضاء تماماً) */
+    div[data-baseweb="popover"], div[data-baseweb="menu"], ul[data-baseweb="menu"], div[data-baseweb="calendar"], div[data-baseweb="select-dropdown"] {
         background-color: #ffffff !important;
-        color: #212529 !important;
+        color: #0f172a !important;
+        border: 1px solid #cbd5e1 !important;
     }
     li[data-baseweb="option"] {
         background-color: #ffffff !important;
-        color: #212529 !important;
+        color: #0f172a !important;
     }
     li[data-baseweb="option"]:hover {
         background-color: #e2e8f0 !important;
-        color: #0f4c81 !important;
+        color: #1e3a8a !important;
     }
 
-    /* الأزرار الاحترافية */
-    .stButton>button { 
-        background-color: #28a745 !important; 
-        color: white !important; 
-        border-radius: 8px !important; 
-        border: none !important; 
-        font-weight: bold !important; 
+    /* الأزرار (أخضر زاهٍ ومضيء، بدون أي أسود) */
+    .stButton>button {
+        background-color: #16a34a !important;
+        color: #ffffff !important;
+        border-radius: 8px !important;
+        border: none !important;
+        font-weight: bold !important;
         padding: 10px 24px;
-        box-shadow: 0 4px 6px rgba(40, 167, 69, 0.2);
+        box-shadow: 0 4px 6px rgba(22, 163, 74, 0.2);
     }
-    .stButton>button:hover { background-color: #218838 !important; color: white !important; }
-    
-    /* القائمة الجانبية (Sidebar) بلون فاتح وهادئ */
-    [data-testid="stSidebar"] { background-color: #f8f9fa !important; border-right: 1px solid #dee2e6; }
-    [data-testid="stSidebar"] p, [data-testid="stSidebar"] span, [data-testid="stSidebar"] label, [data-testid="stSidebar"] h3 { color: #212529 !important; }
+    .stButton>button:hover {
+        background-color: #15803d !important;
+        color: #ffffff !important;
+    }
 
-    /* الجداول (Dataframes) بلون فاتح وواضح */
-    dataframe, .stDataFrame, div[data-testid="stTable"] {
+    /* القائمة الجانبية (Sidebar) */
+    [data-testid="stSidebar"] {
+        background-color: #f1f5f9 !important;
+        border-right: 1px solid #e2e8f0;
+    }
+    [data-testid="stSidebar"] p, [data-testid="stSidebar"] span, [data-testid="stSidebar"] label, [data-testid="stSidebar"] h3 {
+        color: #1e293b !important;
+    }
+
+    /* الجداول (Dataframes) بيضاء وواضحة */
+    table, th, td, div[data-testid="stTable"], .stDataFrame {
         background-color: #ffffff !important;
-        color: #212529 !important;
+        color: #0f172a !important;
     }
+    th { background-color: #f1f5f9 !important; color: #1e3a8a !important; }
+    td { background-color: #ffffff !important; color: #334155 !important; }
 
-    div[data-testid="stMetricValue"] { color: #0f4c81 !important; font-weight: bold; }
-    hr { border-color: #dee2e6; }
+    div[data-testid="stMetricValue"] { color: #1e3a8a !important; font-weight: bold !important; }
+    hr { border-color: #cbd5e1 !important; }
 </style>
 """, unsafe_allow_html=True)
 
@@ -94,7 +112,7 @@ if not st.session_state.logged_in:
     col1, col2, col3 = st.columns([1, 1.5, 1])
     with col2:
         st.markdown("<h1 style='text-align: center; margin-top: 50px;'>📺 الفريد سات</h1>", unsafe_allow_html=True)
-        st.markdown("<p style='text-align: center; color: #6c757d; font-size: 16px;'>نظام إدارة المحلات ونقاط البيع المتطور</p>", unsafe_allow_html=True)
+        st.markdown("<p style='text-align: center; color: #475569; font-size: 16px;'>نظام إدارة المحلات ونقاط البيع المتطور</p>", unsafe_allow_html=True)
         
         with st.form("login_form"):
             username_input = st.text_input("اسم المستخدم")
@@ -165,7 +183,7 @@ with st.sidebar:
                             st.warning("اكتب الباسورد الجديد.")
                 with col_m2:
                     if target_user['username'] != 'admin':
-                        if st.button("حذف المستخدم", type="primary"):
+                        if st.button("حذف المستخدم"):
                             supabase.table('users').delete().eq('id', target_user['id']).execute()
                             st.success("تم الحذف.")
                             st.rerun()
@@ -218,7 +236,7 @@ if role == 'cashier':
                 selected_prod = prod_dict[selected_prod_str]
                 
                 qty = st.number_input("الكمية المطلوبة", min_value=1, max_value=selected_prod['stock_quantity'], value=1)
-                st.markdown(f"<div style='background-color: #e9ecef; padding: 10px; border-radius: 6px; margin-bottom: 10px;'>إجمالي السعر: <b>{selected_prod['sell_price'] * qty} جنيه</b></div>", unsafe_allow_html=True)
+                st.markdown(f"<div style='background-color: #e2e8f0; padding: 10px; border-radius: 6px; margin-bottom: 10px; color: #0f172a;'>إجمالي السعر: <b>{selected_prod['sell_price'] * qty} جنيه</b></div>", unsafe_allow_html=True)
                 
                 if st.button("✅ إتمام البيع وطباعة الفاتورة", use_container_width=True):
                     total_price = selected_prod['sell_price'] * qty
