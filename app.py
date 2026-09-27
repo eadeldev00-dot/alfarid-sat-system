@@ -4,34 +4,47 @@ import pandas as pd
 from datetime import date
 
 # ==========================================
-# 1. إعدادات الصفحة والهوية البصرية (Light & Clean UI)
+# 1. إعدادات الصفحة والألوان الواضحة (Ultra-Clear Light UI)
 # ==========================================
 st.set_page_config(page_title="الفريد سات - نظام الإدارة والكاشير", page_icon="📺", layout="wide")
 
 st.markdown("""
 <style>
-    .stApp { background-color: #f8f9fa; color: #212529; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
-    h1, h2, h3, h4 { color: #0f4c81 !important; font-weight: 700; }
-    p, label, span { color: #333333 !important; }
+    /* خلفية عامة بيضاء وواضحة */
+    .stApp { background-color: #ffffff; color: #1a1a1a; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+    
+    /* العناوين والنصوص بوضوح تام */
+    h1, h2, h3, h4, h5, h6 { color: #0d3b66 !important; font-weight: 700 !important; }
+    p, label, span, div, .stMarkdown { color: #212529 !important; font-size: 15px; }
+    
+    /* مربعات الإدخال والنصوص بوضوح عالي */
     .stTextInput input, .stSelectbox select, .stNumberInput input, .stTextArea textarea { 
-        background-color: #ffffff !important; 
-        color: #212529 !important; 
-        border: 1px solid #ced4da !important; 
+        background-color: #f8f9fa !important; 
+        color: #1a1a1a !important; 
+        border: 1px solid #4a90e2 !important; 
         border-radius: 8px !important;
+        font-weight: 500;
     }
+    
+    /* الأزرار الاحترافية الواضحة */
     .stButton>button { 
-        background-color: #28a745; 
-        color: white; 
+        background-color: #2b9348; 
+        color: white !important; 
         border-radius: 8px; 
         border: none; 
         font-weight: bold; 
         padding: 10px 24px;
-        box-shadow: 0 4px 6px rgba(40, 167, 69, 0.2);
-        transition: 0.3s;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
     }
-    .stButton>button:hover { background-color: #218838; color: white; }
-    div[data-testid="stMetricValue"] { color: #0f4c81 !important; font-weight: bold; }
-    hr { border-color: #dee2e6; }
+    .stButton>button:hover { background-color: #1b4332; color: white !important; }
+    
+    /* القائمة الجانبية (Sidebar) */
+    css-1d391kg, [data-testid="stSidebar"] { background-color: #f1f5f9 !important; border-left: 1px solid #e2e8f0; }
+    [data-testid="stSidebar"] p, [data-testid="stSidebar"] span, [data-testid="stSidebar"] label, [data-testid="stSidebar"] h3 { color: #1e293b !important; }
+
+    /* الجداول والإحصائيات */
+    div[data-testid="stMetricValue"] { color: #0d3b66 !important; font-weight: bold; }
+    hr { border-color: #cbd5e1; }
 </style>
 """, unsafe_allow_html=True)
 
@@ -63,7 +76,7 @@ if not st.session_state.logged_in:
     col1, col2, col3 = st.columns([1, 1.5, 1])
     with col2:
         st.markdown("<h1 style='text-align: center; margin-top: 50px;'>📺 الفريد سات</h1>", unsafe_allow_html=True)
-        st.markdown("<p style='text-align: center; color: #6c757d; font-size: 16px;'>نظام إدارة المحلات ونقاط البيع المتطور</p>", unsafe_allow_html=True)
+        st.markdown("<p style='text-align: center; color: #475569; font-size: 16px;'>نظام إدارة المحلات ونقاط البيع المتطور</p>", unsafe_allow_html=True)
         
         with st.form("login_form"):
             username_input = st.text_input("اسم المستخدم")
@@ -187,7 +200,7 @@ if role == 'cashier':
                 selected_prod = prod_dict[selected_prod_str]
                 
                 qty = st.number_input("الكمية المطلوبة", min_value=1, max_value=selected_prod['stock_quantity'], value=1)
-                st.markdown(f"<div style='background-color: #e9ecef; padding: 10px; border-radius: 6px; margin-bottom: 10px;'>إجمالي السعر: <b>{selected_prod['sell_price'] * qty} جنيه</b></div>", unsafe_allow_html=True)
+                st.markdown(f"<div style='background-color: #e2e8f0; padding: 10px; border-radius: 6px; margin-bottom: 10px; color: #0f172a;'>إجمالي السعر: <b>{selected_prod['sell_price'] * qty} جنيه</b></div>", unsafe_allow_html=True)
                 
                 if st.button("✅ إتمام البيع وطباعة الفاتورة", use_container_width=True):
                     total_price = selected_prod['sell_price'] * qty
@@ -227,7 +240,7 @@ if role == 'cashier':
         auto_fill = False
         selected_client_key = None
         if client_dict:
-            selected_client_key = st.selectbox("اختر العميل لتعبئة بياناته تلقائياً (أو اتركه لتسجيل جديد)", options=["-- عميل جديد --"] + list(client_dict.keys()))
+            selected_client_key = st.selectbox("اختر العميل لتعبئة بياناته تلقائياً", options=["-- عميل جديد --"] + list(client_dict.keys()))
             if selected_client_key != "-- عميل جديد --":
                 auto_fill = True
 
@@ -238,10 +251,9 @@ if role == 'cashier':
                 st.success(f"تم اختيار العميل: **{c_name}** | الهاتف: **{c_phone}**")
             else:
                 c_name = st.text_input("اسم العميل الجديد")
-                c_phone = st.text_input("رقم الموبايل (للتعرف عليه لاحقاً)")
+                c_phone = st.text_input("رقم الموبايل")
 
             maint_mode = st.radio("نوع التيكت:", ["صيانة داخلية (في المحل)", "صيانة خارجية (زيارة منزلية)"])
-            
             issue_desc = st.text_input("وصف المشكلة الأساسية")
             
             if maint_mode == "صيانة داخلية (في المحل)":
@@ -255,7 +267,7 @@ if role == 'cashier':
                 issue_reason = "زيارة منزلية وفحص ميداني"
                 
                 st.markdown("---")
-                st.markdown("#### 📦 سحب بضاعة للمعاينة أو التركيب أثناء الزيارة (تتخصم من المخزن وتُضاف عالحساب)")
+                st.markdown("#### 📦 سحب بضاعة للمعاينة أو التركيب أثناء الزيارة")
                 try:
                     all_prods_res = supabase.table('products').select('*').gt('stock_quantity', 0).execute()
                     warehouse_items = all_prods_res.data if all_prods_res.data else []
@@ -275,18 +287,17 @@ if role == 'cashier':
                         selected_prod_id = chosen_item['id']
                         taken_qty = st.number_input("الكمية المأخوذة", min_value=1, max_value=chosen_item['stock_quantity'], value=1)
                         item_cost = float(chosen_item['sell_price'] * taken_qty)
-                        st.info(f"قيمة البضاعة المأخوذة: {item_cost} جنيه (سيتم خصمها من المخزن فوراً وتضاف للحساب).")
+                        st.info(f"قيمة البضاعة المأخوذة: {item_cost} جنيه (سيتم خصمها من المخزن فوراً).")
                 else:
-                    st.info("لا توجد بضاعة متاحة في المخزن حالياً للسحب.")
+                    st.info("لا توجد بضاعة متاحة في المخزن حالياً.")
 
             ticket_status = st.selectbox("حالة التيكت:", ["قيد الانتظار", "جاري العمل", "تم التسليم والدفع وتتم الإغلاق"])
-            
-            submit_ticket = st.form_submit_button("💾 حفظ تيكت الصيانة وإنشاء الحركة", use_container_width=True)
+            submit_ticket = st.form_submit_button("💾 حفظ تيكت الصيانة", use_container_width=True)
             
             if submit_ticket:
                 if c_name and c_phone and issue_desc:
                     try:
-                        full_details = f"[{maint_mode}] المشكلة: {issue_desc} | السبب/ملاحظات: {issue_reason}"
+                        full_details = f"[{maint_mode}] المشكلة: {issue_desc} | السبب: {issue_reason}"
                         supabase.table('maintenance').insert({
                             'customer_name': c_name,
                             'phone': c_phone,
@@ -303,19 +314,19 @@ if role == 'cashier':
                                 new_qty = max(0, old_qty - taken_qty)
                                 supabase.table('products').update({'stock_quantity': new_qty}).eq('id', selected_prod_id).execute()
 
-                        st.success(f"✅ تم إصدار تيكت الصيانة للعميل {c_name} بنجاح وتم ربط الحسابات وتحديث المخزن!")
+                        st.success("✅ تم إصدار تيكت الصيانة وتحديث المخزن بنجاح!")
                     except Exception as err:
-                        st.error(f"خطأ أثناء حفظ التيكت: {err}")
+                        st.error(f"خطأ: {err}")
                 else:
-                    st.warning("يرجى إدخال اسم العميل، رقم الهاتف، ووصف المشكلة.")
+                    st.warning("أدخل البيانات الأساسية للعميل ووصف المشكلة.")
 
     with tab_iptv:
-        st.markdown("### 📺 تسجيل اشتراكات الـ IPTV (بربط العملاء)")
+        st.markdown("### 📺 تسجيل اشتراكات الـ IPTV")
         with st.form("smart_iptv_form"):
             i_name = st.text_input("اسم المشترك")
-            i_phone = st.text_input("رقم الموبايل (للتعرف على العميل مستقبلاً)")
+            i_phone = st.text_input("رقم الموبايل")
             i_mac = st.text_input("رقم اللوحة / أو عنوان الـ MAC")
-            i_server = st.text_input("اسم السيرفر (مثال: Cobra, Dragon)")
+            i_server = st.text_input("اسم السيرفر")
             s_date = st.date_input("تاريخ البدء", date.today())
             e_date = st.date_input("تاريخ الانتهاء")
             
@@ -331,11 +342,11 @@ if role == 'cashier':
                             'start_date': str(s_date),
                             'expire_date': str(e_date)
                         }).execute()
-                        st.success("✅ تم تفعيل اشتراك الـ IPTV وحفظ بيانات العميل بنجاح!")
+                        st.success("✅ تم تفعيل اشتراك الـ IPTV بنجاح!")
                     except Exception as err:
                         st.error(f"خطأ: {err}")
                 else:
-                    st.warning("أدخل الاسم، الهاتف، واسم السيرفر.")
+                    st.warning("أدخل البيانات الأساسية.")
 
     with tab_return:
         st.markdown("### 🔄 المرتجعات")
@@ -400,13 +411,13 @@ else:
                     st.rerun()
 
     with admin_tab3:
-        st.markdown("### 🛠️ كافة تذاكر الصيانة (الداخلية والخارجية المغلقة والجارية)")
+        st.markdown("### 🛠️ تذاكر الصيانة (المغلقة والجارية)")
         try:
             m_res = supabase.table('maintenance').select('*').execute()
             if m_res.data:
                 st.dataframe(pd.DataFrame(m_res.data), use_container_width=True)
             else:
-                st.info("لا توجد تذاكر صيانة مسجلة.")
+                st.info("لا توجد تذاكر صيانة مسجلة حتى الآن.")
         except:
             pass
 
